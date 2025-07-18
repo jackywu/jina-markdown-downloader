@@ -1,4 +1,7 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dazeb-markdown-downloader-badge.jpg)](https://mseep.ai/app/dazeb-markdown-downloader)
+[![MseeP Badge](https://mseep.net/pr/dazeb-markdown-downloader-badge.jpg)](https://mseep.ai/app/dazeb-markdown-downloader)
+
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/e85a9805-464e-46bd-a953-ccac0c4a5129)
 
 # Markdown Downloader MCP Server
 
@@ -53,15 +56,35 @@ npx -y @smithery/cli install @dazeb/markdown-downloader --client claude
    npm run build
    ```
 
-## Manually Add Server to Cline/Roo-Cline MCP Settings file  
+## Manually Add Server to Cline/Roo-Cline MCP Settings file
 
-```
+### Linux/macOS
+```json
 {
   "mcpServers": {
     "markdown-downloader": {
       "command": "node",
       "args": [
         "/home/user/Documents/Cline/MCP/markdown-downloader/build/index.js"
+      ],
+      "disabled": false,
+      "alwaysAllow": [
+        "download_markdown",
+        "set_download_directory"
+      ]
+    }
+  }
+}
+```
+
+### Windows
+```json
+{
+  "mcpServers": {
+    "markdown-downloader": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\username\\Documents\\Cline\\MCP\\markdown-downloader\\build\\index.js"
       ],
       "disabled": false,
       "alwaysAllow": [
@@ -116,8 +139,13 @@ use get_download_directory
 
 ## Configuration
 
+### Linux/macOS
 - Configuration is stored in `~/.config/markdown-downloader/config.json`
 - Default download directory: `~/.markdown-downloads`
+
+### Windows
+- Configuration is stored in `%APPDATA%\markdown-downloader\config.json`
+- Default download directory: `%USERPROFILE%\Documents\markdown-downloads`
 
 ## Troubleshooting
 
