@@ -21,7 +21,19 @@ const configBasePath = process.platform === 'win32'
 const CONFIG_DIR = configBasePath;
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
-// Default download directory based on platform
+/**
+ * Returns the default download directory based on the operating system platform.
+ * 
+ * On Windows, the directory is set to 'Documents/markdown-downloads'.
+ * On Unix-like systems (Linux, macOS), it's set to '.markdown-downloads' in the home directory.
+ * 
+ * @returns {string} The platform-specific default download directory path
+ * 
+ * @example
+ * // On Windows: C:\Users\username\Documents\markdown-downloads
+ * // On Linux/macOS: /home/username/.markdown-downloads
+ * const downloadDir = getDefaultDownloadDir();
+ */
 const getDefaultDownloadDir = () => {
   return process.platform === 'win32'
     ? path.join(homedir, 'Documents', 'markdown-downloads')
@@ -32,6 +44,19 @@ interface MarkdownDownloaderConfig {
   downloadDirectory: string;
 }
 
+/**
+ * Retrieves the application configuration from the config file.
+ * 
+ * If the config file doesn't exist, it creates a new one with default settings.
+ * The configuration includes the download directory path where markdown files are saved.
+ * If an error occurs during reading, it falls back to default configuration.
+ * 
+ * @returns {MarkdownDownloaderConfig} The configuration object containing downloadDirectory
+ * 
+ * @example
+ * const config = getConfig();
+ * console.log(config.downloadDirectory); // '/home/user/.markdown-downloads'
+ */
 function getConfig(): MarkdownDownloaderConfig {
   try {
     fs.ensureDirSync(CONFIG_DIR);
@@ -56,6 +81,18 @@ function getConfig(): MarkdownDownloaderConfig {
   }
 }
 
+/**
+ * Saves the application configuration to the config file.
+ * 
+ * Ensures the config directory and download directory exist before saving.
+ * If an error occurs during the save operation, it logs the error to console.
+ * 
+ * @param {MarkdownDownloaderConfig} config - The configuration object to save
+ * 
+ * @example
+ * const config = { downloadDirectory: '/path/to/downloads' };
+ * saveConfig(config);
+ */
 function saveConfig(config: MarkdownDownloaderConfig) {
   try {
     fs.ensureDirSync(CONFIG_DIR);
@@ -66,6 +103,19 @@ function saveConfig(config: MarkdownDownloaderConfig) {
   }
 }
 
+/**
+ * Sanitizes a URL to create a safe filename.
+ * 
+ * Removes the protocol (http:// or https://) from the URL and replaces all
+ * non-alphanumeric characters with dashes. The result is converted to lowercase.
+ * 
+ * @param {string} url - The URL to sanitize
+ * @returns {string} A sanitized string safe for use as a filename
+ * 
+ * @example
+ * sanitizeFilename('https://example.com/page?id=123');
+ * // Returns: 'example-com-page-id-123'
+ */
 function sanitizeFilename(url: string): string {
   // Remove protocol, replace non-alphanumeric chars with dash
   return url
@@ -74,6 +124,19 @@ function sanitizeFilename(url: string): string {
     .toLowerCase();
 }
 
+/**
+ * Generates a unique filename for a downloaded markdown file.
+ * 
+ * Creates a filename by combining the sanitized URL with the current date
+ * in YYYYMMDD format, and appends the .md extension.
+ * 
+ * @param {string} url - The URL to generate a filename for
+ * @returns {string} A unique filename with .md extension
+ * 
+ * @example
+ * generateFilename('https://example.com/article');
+ * // Returns: 'example-com-article-20260115.md'
+ */
 function generateFilename(url: string): string {
   const sanitizedUrl = sanitizeFilename(url);
   const datestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -83,6 +146,16 @@ function generateFilename(url: string): string {
 class MarkdownDownloaderServer {
   private server: Server;
 
+  /**
+   * Initializes the Markdown Downloader MCP server.
+   * 
+   * Sets up the server with name, version, and capabilities.
+   * Configures tool handlers and error handling.
+   * Registers a SIGINT handler for graceful shutdown.
+   * 
+   * @example
+   * const server = new MarkdownDownloaderServer();
+   */
   constructor() {
     this.server = new Server(
       {
@@ -107,6 +180,22 @@ class MarkdownDownloaderServer {
     });
   }
 
+  /**
+   * Sets up request handlers for all available MCP tools.
+   * 
+   * Registers handlers for:
+   * - ListToolsRequest: Returns available tools and their schemas
+   * - CallToolRequest: Executes the requested tool with provided arguments
+   * 
+   * Available tools:
+   * - download_markdown: Downloads a webpage as markdown using r.jina.ai
+   * - list_downloaded_files: Lists all downloaded markdown files
+   * - set_download_directory: Sets the main download folder
+   * - get_download_directory: Gets the current download directory
+   * - create_subdirectory: Creates a new subdirectory in the download folder
+   * 
+   * @private
+   */
   private setupToolHandlers(): void {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -377,6 +466,19 @@ class MarkdownDownloaderServer {
     });
   }
 
+  /**
+   * Starts the MCP server and connects it to stdio transport.
+   * 
+   * Creates a stdio transport layer and connects the server to it,
+   * allowing communication through standard input/output streams.
+   * Logs a message to stderr when the server is running.
+   * 
+   * @returns {Promise<void>} A promise that resolves when the server is connected
+   * 
+   * @example
+   * const server = new MarkdownDownloaderServer();
+   * await server.run();
+   */
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
